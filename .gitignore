@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.test-build/
+*.vsix
+probe/*/node_modules/
+probe/
+test/fixtures/*/node_modules/
+test/fixtures/large/

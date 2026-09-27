@@ -1,0 +1,98 @@
+{
+  "name": "project-problems",
+  "displayName": "Project Problems",
+  "description": "Every TypeScript error in the project in the Problems panel, including files you have not opened.",
+  "version": "0.1.0",
+  "publisher": "lagudafuadtosin",
+  "author": "Fuad Laguda",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lagudafuadtosin/project-problems"
+  },
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Linters",
+    "Programming Languages"
+  ],
+  "keywords": [
+    "typescript",
+    "problems",
+    "errors",
+    "diagnostics",
+    "tsc",
+    "monorepo"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "workspaceContains:**/tsconfig.json"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false,
+      "description": "Project Problems runs the TypeScript compiler from the workspace's node_modules, so it only runs in trusted folders."
+    },
+    "virtualWorkspaces": false
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "projectProblems.recheck",
+        "title": "Project Problems: Recheck All Projects"
+      },
+      {
+        "command": "projectProblems.toggle",
+        "title": "Project Problems: Pause or Resume"
+      },
+      {
+        "command": "projectProblems.showOutput",
+        "title": "Project Problems: Show Output"
+      }
+    ],
+    "configuration": {
+      "title": "Project Problems",
+      "properties": {
+        "projectProblems.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Check every TypeScript project in the workspace and show its errors, including files that are not open."
+        },
+        "projectProblems.exclude": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "**/node_modules/**",
+            "**/dist/**",
+            "**/build/**",
+            "**/out/**"
+          ],
+          "description": "tsconfig files matching these globs are not checked."
+        },
+        "projectProblems.maxProjects": {
+          "type": "number",
+          "default": 20,
+          "minimum": 1,
+          "description": "The most tsconfig projects to check at once. Each runs its own compiler in watch mode."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsc --noEmit -p . && node esbuild.mjs",
+    "test": "esbuild test/parse.test.ts test/tsconfig.test.ts test/security.test.ts --bundle --platform=node --format=esm --outdir=.test-build --out-extension:.js=.mjs --log-level=warning && node --test .test-build/parse.test.mjs .test-build/tsconfig.test.mjs .test-build/security.test.mjs",
+    "package": "npm run build && vsce package --no-dependencies",
+    "check:live": "esbuild test/live-monorepo.ts --bundle --platform=node --format=cjs --outfile=.test-build/live-monorepo.cjs --log-level=warning && node .test-build/live-monorepo.cjs",
+    "check:edge": "esbuild test/live-edge.ts --bundle --platform=node --format=cjs --outfile=.test-build/live-edge.cjs --log-level=warning && node .test-build/live-edge.cjs"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/vscode": "~1.90.0",
+    "@vscode/vsce": "^3.0.0",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.6.0"
+  }
+}

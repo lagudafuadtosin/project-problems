@@ -1,0 +1,4 @@
+{
+  // shared settings, with a comment and a trailing comma to test the parser
+  "compilerOptions": { "strict": true, "target": "ES2022", "module": "ESNext", "moduleResolution": "Bundler", "skipLibCheck": true, },
+}
