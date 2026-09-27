@@ -4,6 +4,8 @@ Every TypeScript error in your project in the Problems panel, including files yo
 
 VS Code only shows TypeScript errors for files that are open. A type error in a file you have not touched stays hidden until you open it or run a build. This has been one of the most requested VS Code features since 2016 ([microsoft/vscode#13953](https://github.com/microsoft/vscode/issues/13953)). Project Problems fills the gap.
 
+![Plain VS Code shows no problems; with Project Problems the Problems panel lists errors from five files that are not open, and clicking one opens it at the line](https://raw.githubusercontent.com/lagudafuadtosin/project-problems/main/images/demo.gif)
+
 ## How it works
 
 - Finds every `tsconfig.json` in the workspace.

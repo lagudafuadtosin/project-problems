@@ -6,3 +6,4 @@ probe/*/node_modules/
 probe/
 test/fixtures/*/node_modules/
 test/fixtures/large/
+demo/
