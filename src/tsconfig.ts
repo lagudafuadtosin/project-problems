@@ -1,5 +1,4 @@
 import { readFileSync, existsSync } from "node:fs";
-import { createRequire } from "node:module";
 import * as path from "node:path";
 
 // True when a path sits inside one of the given folders. The extension only
@@ -66,20 +65,89 @@ export interface Compiler {
 // build. VS Code ships only the editor half of TypeScript, not tsc, so there
 // is nothing to fall back to when a project has none installed.
 export function findCompiler(projectDir: string, roots: string[]): Compiler | null {
+  return findBin(projectDir, roots, "typescript", "tsc");
+}
+
+// A package's command-line script, as the project installs it. Walking up must
+// not leave the trusted folders: a package found in a parent folder (a
+// home-directory install, say) is code the user never trusted.
+export function findBin(projectDir: string, roots: string[], pkgName: string, binName: string): Compiler | null {
   try {
-    const req = createRequire(path.join(projectDir, "noop.js"));
-    const pkgPath = req.resolve("typescript/package.json");
-    // Walking up must not leave the trusted folders: a TypeScript found in a
-    // parent folder (a home-directory install, say) is code the user never trusted.
-    if (!isInside(pkgPath, roots)) return null;
-    const pkg = JSON.parse(readFileSync(pkgPath, "utf8")) as { version: string; bin?: Record<string, string> };
-    const bin = pkg.bin?.tsc;
+    const pkgPath = packageJsonPath(projectDir, pkgName);
+    if (!pkgPath || !isInside(pkgPath, roots)) return null;
+    const pkg = JSON.parse(readFileSync(pkgPath, "utf8")) as { version: string; bin?: string | Record<string, string> };
+    const bin = typeof pkg.bin === "string" ? pkg.bin : pkg.bin?.[binName];
     if (!bin) return null;
     const script = path.join(path.dirname(pkgPath), bin);
     return existsSync(script) ? { script, version: pkg.version } : null;
   } catch {
     return null;
   }
+}
+
+// True when the project installs this package inside the trusted folders.
+export function hasPackage(projectDir: string, roots: string[], pkgName: string): boolean {
+  const pkgPath = packageJsonPath(projectDir, pkgName);
+  return pkgPath !== null && isInside(pkgPath, roots);
+}
+
+// node_modules/<name>/package.json in this folder or the nearest parent that
+// has one, the way Node looks. Read from disk rather than through require,
+// because a package's "exports" can hide its package.json (@astrojs/check does).
+export function packageJsonPath(fromDir: string, pkgName: string): string | null {
+  let dir = path.resolve(fromDir);
+  for (;;) {
+    const candidate = path.join(dir, "node_modules", pkgName, "package.json");
+    if (existsSync(candidate)) return candidate;
+    const parent = path.dirname(dir);
+    if (parent === dir) return null;
+    dir = parent;
+  }
+}
+
+export type CheckerKind = "tsc" | "vue" | "svelte" | "astro";
+
+export interface Checker extends Compiler {
+  kind: CheckerKind;
+}
+
+const has = (dir: string, names: string[]) => names.some((n) => existsSync(path.join(dir, n)));
+
+// Which checker a project needs. Vue, Svelte and Astro files are not read by
+// plain tsc, so a project that uses one of them is checked with that
+// framework's own checker, the one its build or CI uses. Otherwise tsc.
+export function findChecker(projectDir: string, roots: string[]): Checker | null {
+  if (has(projectDir, ["svelte.config.js", "svelte.config.mjs", "svelte.config.cjs", "svelte.config.ts"])) {
+    const c = findBin(projectDir, roots, "svelte-check", "svelte-check");
+    if (c) return { ...c, kind: "svelte" };
+  }
+  if (has(projectDir, ["astro.config.mjs", "astro.config.js", "astro.config.ts", "astro.config.mts", "astro.config.cjs"])) {
+    // astro check asks to install @astrojs/check when it is missing, and a
+    // background process must never wait on a question, so it has to be there.
+    const c = findBin(projectDir, roots, "astro", "astro");
+    if (c && hasPackage(projectDir, roots, "@astrojs/check")) return { ...c, kind: "astro" };
+  }
+  const vue = findBin(projectDir, roots, "vue-tsc", "vue-tsc");
+  if (vue) return { ...vue, kind: "vue" };
+  const tsc = findCompiler(projectDir, roots);
+  return tsc ? { ...tsc, kind: "tsc" } : null;
+}
+
+// ESLint for a workspace folder: only when the project installs ESLint and has
+// its own config, so results match the project's lint run.
+export function findEslint(root: string, roots: string[]): Compiler | null {
+  const configs = [
+    "eslint.config.js", "eslint.config.mjs", "eslint.config.cjs", "eslint.config.ts", "eslint.config.mts", "eslint.config.cts",
+    ".eslintrc", ".eslintrc.js", ".eslintrc.cjs", ".eslintrc.json", ".eslintrc.yml", ".eslintrc.yaml",
+  ];
+  let inPackage = false;
+  try {
+    inPackage = Boolean((JSON.parse(readFileSync(path.join(root, "package.json"), "utf8")) as { eslintConfig?: unknown }).eslintConfig);
+  } catch {
+    // no package.json, or not JSON
+  }
+  if (!has(root, configs) && !inPackage) return null;
+  return findBin(root, roots, "eslint", "eslint");
 }
 
 // The configs a tsconfig points to under "references". A path can name a

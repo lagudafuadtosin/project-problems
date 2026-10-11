@@ -1,0 +1,3 @@
+1791746497788 START "/project"
+1791746497791 ERROR "src\\App.svelte" 2:7 "Type 'string' is not assignable to type 'number'."
+1791746497793 COMPLETED 190 FILES 1 ERRORS 0 WARNINGS 1 FILES_WITH_PROBLEMS

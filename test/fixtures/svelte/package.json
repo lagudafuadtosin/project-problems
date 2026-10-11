@@ -1,0 +1,1 @@
+{ "name": "pp-fixture-svelte", "private": true, "type": "module", "devDependencies": { "svelte": "^5.0.0", "svelte-check": "^4.0.0", "typescript": "^5.6.0" } }

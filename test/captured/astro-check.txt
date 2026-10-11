@@ -1,0 +1,14 @@
+[2m20:21:40[22m [34m[content][39m Syncing content
+[2m20:21:40[22m [34m[content][39m Synced content
+[2m20:21:40[22m [34m[types][39m Generated [2m86ms[22m
+[2m20:21:40[22m [34m[check][39m Getting diagnostics for Astro files in /project...
+[96msrc/pages/index.astro[0m:[93m2[0m:[93m7[0m - [91merror[0m[90m ts(2322): [0mType 'string' is not assignable to type 'number'.
+
+[7m2[0m const count: number = "not a number";
+[7m [0m [91m      ~~~~~[0m
+
+[1mResult (3 files): [22m
+[2m-[22m [1m[31m1 error[39m[22m
+[2m-[22m [2m0 warnings[22m
+[2m-[22m [2m0 hints
+[22m

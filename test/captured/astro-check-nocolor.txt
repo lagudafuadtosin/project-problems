@@ -1,0 +1,14 @@
+20:21:47 [content] Syncing content
+20:21:47 [content] Synced content
+20:21:47 [types] Generated 79ms
+20:21:47 [check] Getting diagnostics for Astro files in /project...
+[96msrc/pages/index.astro[0m:[93m2[0m:[93m7[0m - [91merror[0m[90m ts(2322): [0mType 'string' is not assignable to type 'number'.
+
+[7m2[0m const count: number = "not a number";
+[7m [0m [91m      ~~~~~[0m
+
+Result (3 files): 
+- 1 error
+- 0 warnings
+- 0 hints
+

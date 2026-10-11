@@ -1,8 +1,8 @@
 {
   "name": "project-problems",
   "displayName": "Project Problems",
-  "description": "Every TypeScript error in the project in the Problems panel, including files you have not opened.",
-  "version": "0.1.0",
+  "description": "Every error in the project in the Problems panel, including files you have not opened: TypeScript, Vue, Svelte, Astro and ESLint.",
+  "version": "1.0.0",
   "publisher": "lagudafuadtosin",
   "author": "Fuad Laguda",
   "license": "MIT",
@@ -33,16 +33,22 @@
     "errors",
     "diagnostics",
     "tsc",
-    "monorepo"
+    "monorepo",
+    "vue",
+    "svelte",
+    "astro",
+    "eslint"
   ],
   "main": "./dist/extension.js",
   "activationEvents": [
-    "workspaceContains:**/tsconfig.json"
+    "workspaceContains:**/tsconfig.json",
+    "workspaceContains:**/eslint.config.{js,mjs,cjs,ts,mts,cts}",
+    "workspaceContains:**/.eslintrc*"
   ],
   "capabilities": {
     "untrustedWorkspaces": {
       "supported": false,
-      "description": "Project Problems runs the TypeScript compiler from the workspace's node_modules, so it only runs in trusted folders."
+      "description": "Project Problems runs the project's own checkers (TypeScript, vue-tsc, svelte-check, astro check, ESLint) from its node_modules, so it only runs in trusted folders."
     },
     "virtualWorkspaces": false
   },
@@ -57,6 +63,10 @@
         "title": "Project Problems: Pause or Resume"
       },
       {
+        "command": "projectProblems.clear",
+        "title": "Project Problems: Clear Problems"
+      },
+      {
         "command": "projectProblems.showOutput",
         "title": "Project Problems: Show Output"
       }
@@ -67,7 +77,42 @@
         "projectProblems.enable": {
           "type": "boolean",
           "default": true,
-          "description": "Check every TypeScript project in the workspace and show its errors, including files that are not open."
+          "description": "Check every project in the workspace and show its problems, including files that are not open."
+        },
+        "projectProblems.mode": {
+          "type": "string",
+          "enum": [
+            "watch",
+            "onSave",
+            "manual"
+          ],
+          "default": "watch",
+          "enumDescriptions": [
+            "Keep each TypeScript or vue-tsc compiler running; it updates whenever a file changes. Svelte, Astro and ESLint checks run on save.",
+            "Check when you save a file. Lighter on large projects.",
+            "Check when you run \"Project Problems: Recheck All Projects\", and once on opening (unless turned off below)."
+          ],
+          "description": "When to check."
+        },
+        "projectProblems.checkOnStartup": {
+          "type": "boolean",
+          "default": true,
+          "description": "In manual mode, check once when the workspace opens or these settings change. Otherwise only on Recheck."
+        },
+        "projectProblems.eslint.enable": {
+          "type": "boolean",
+          "default": false,
+          "description": "Also lint the whole project with the project's own ESLint and config, on save. Needs ESLint installed in the project and an ESLint config file."
+        },
+        "projectProblems.eslint.paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "."
+          ],
+          "description": "What ESLint checks, relative to each workspace folder."
         },
         "projectProblems.exclude": {
           "type": "array",
@@ -86,21 +131,24 @@
           "type": "number",
           "default": 20,
           "minimum": 1,
-          "description": "The most tsconfig projects to check at once. Each runs its own compiler in watch mode."
+          "description": "The most tsconfig projects to check at once. Each runs its own checker."
         }
       }
     }
   },
   "scripts": {
     "build": "tsc --noEmit -p . && node esbuild.mjs",
-    "test": "esbuild test/parse.test.ts test/tsconfig.test.ts test/security.test.ts --bundle --platform=node --format=esm --outdir=.test-build --out-extension:.js=.mjs --log-level=warning && node --test .test-build/parse.test.mjs .test-build/tsconfig.test.mjs .test-build/security.test.mjs",
+    "test": "esbuild test/parse.test.ts test/tsconfig.test.ts test/security.test.ts test/tools.test.ts --bundle --platform=node --format=esm --outdir=.test-build --out-extension:.js=.mjs --log-level=warning && node --test .test-build/parse.test.mjs .test-build/tsconfig.test.mjs .test-build/security.test.mjs .test-build/tools.test.mjs",
     "package": "npm run build && vsce package --no-dependencies",
     "check:live": "esbuild test/live-monorepo.ts --bundle --platform=node --format=cjs --outfile=.test-build/live-monorepo.cjs --log-level=warning && node .test-build/live-monorepo.cjs",
-    "check:edge": "esbuild test/live-edge.ts --bundle --platform=node --format=cjs --outfile=.test-build/live-edge.cjs --log-level=warning && node .test-build/live-edge.cjs"
+    "check:edge": "esbuild test/live-edge.ts --bundle --platform=node --format=cjs --outfile=.test-build/live-edge.cjs --log-level=warning && node .test-build/live-edge.cjs",
+    "check:frameworks": "esbuild test/live-frameworks.ts --bundle --platform=node --format=cjs --outfile=.test-build/live-frameworks.cjs --log-level=warning && node .test-build/live-frameworks.cjs",
+    "check:host": "npm run build && esbuild test/host/suite.ts --bundle --platform=node --format=cjs --external:vscode --outfile=.test-build/host-suite.cjs --log-level=warning && esbuild test/host/run.ts --bundle --platform=node --format=cjs --outfile=.test-build/host-run.cjs --log-level=warning && node .test-build/host-run.cjs"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
     "@types/vscode": "~1.75.0",
+    "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.0.0",
     "esbuild": "^0.25.0",
     "typescript": "^5.6.0"

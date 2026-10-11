@@ -1,0 +1,1 @@
+{ "name": "pp-fixture-eslint", "private": true, "type": "module", "devDependencies": { "eslint": "^9.0.0", "typescript": "^5.6.0" } }

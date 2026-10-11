@@ -7,3 +7,5 @@ probe/
 test/fixtures/*/node_modules/
 test/fixtures/large/
 demo/
+.vscode-test/
+test/fixtures/*/.astro/

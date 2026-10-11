@@ -33,6 +33,7 @@ export class WatchParser {
   private buffer = "";
   private current: TscProblem[] = [];
   private last: TscProblem | null = null;
+  private ended = false;
 
   constructor(
     private readonly onRun: (problems: TscProblem[]) => void,
@@ -54,6 +55,19 @@ export class WatchParser {
     }
   }
 
+  // A one-off run (no --watch) prints no "Found N errors" line with --pretty
+  // false, so the list is handed over when the process ends.
+  finish(): void {
+    if (this.buffer) this.line(this.buffer);
+    this.buffer = "";
+    // If the run already ended with a summary line, its list was handed over;
+    // an empty list here must not replace it.
+    if (this.ended && this.current.length === 0) return;
+    this.onRun(this.current);
+    this.current = [];
+    this.last = null;
+  }
+
   private line(raw: string): void {
     const text = cleanLine(raw);
     const status = text.replace(TIMESTAMP, "");
@@ -64,6 +78,7 @@ export class WatchParser {
       return;
     }
     if (RUN_END.test(status)) {
+      this.ended = true;
       this.onRun(this.current);
       this.current = [];
       this.last = null;

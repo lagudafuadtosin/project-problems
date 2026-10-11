@@ -1,0 +1,10 @@
+{
+  "folders": [
+    { "path": "../fixtures/vue" },
+    { "path": "../fixtures/svelte" },
+    { "path": "../fixtures/astro" },
+    { "path": "../fixtures/eslint" }
+  ],
+  "settings": {
+  }
+}
